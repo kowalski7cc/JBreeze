@@ -2,6 +2,11 @@
 
 A simple app for controlling Daikin AirCooling from your PC
 
+## Screenshots
+
+![Screenshot1](https://github.com/kowalski7cc/JBreeze/raw/master/screenshots/Screenshot1.png)
+![Screenshot2](https://github.com/kowalski7cc/JBreeze/raw/master/screenshots/Screenshot2.png)
+
 ## Building
 
 You will need Java 8 and Maven to build using the command
