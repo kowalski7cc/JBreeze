@@ -121,7 +121,7 @@ public class Main {
     private void pollUnits() {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        statusMap = units.parallelStream()
+        statusMap = units.stream()
                 .collect(Collectors.toMap(u -> u, u -> {
                     Callable<DaikinStatus> callable = () -> {
                         return u.getStatus();
@@ -129,7 +129,7 @@ public class Main {
                     return executorService.submit(callable);
                 }))
                 .entrySet()
-                .parallelStream()
+                .stream()
                 .collect(Collectors.toMap(k -> k.getKey(), j -> {
                     try {
                         return j.getValue().get();
