@@ -32,4 +32,17 @@ public enum SpecialMode implements PostOption {
 	public String getPostOption() {
 		return ((id==null)||(id.equals("")))?"":"adv=" + id;
 	}
+
+	public String toString() {
+		switch (this) {
+			case POWERFUL:
+				return "Powerful";
+			case ECONOMY:
+				return "Economy";
+			case NONE:
+			default:
+				return "None";
+
+		}
+	}
 }

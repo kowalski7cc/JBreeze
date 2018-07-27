@@ -21,6 +21,7 @@ public class DaikinStatus {
 	private Temperature temperature;
 	private Humidity humidity;
 	private SpecialMode specialMode;
+	private boolean specialModeActive;
 	
 	public DaikinStatus() {
 		temperature = new Temperature();
@@ -104,5 +105,11 @@ public class DaikinStatus {
 	}
 	public String getTargetPostOption() {
 		return temperature.getTargetPostOption(mode);
+	}
+	public boolean isSpecialModeActive() {
+		return specialModeActive;
+	}
+	public void setSpecialModeActive(boolean specialModeActive) {
+		this.specialModeActive = specialModeActive;
 	}
 }

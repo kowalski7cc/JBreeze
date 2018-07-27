@@ -66,6 +66,7 @@ public class Decoder {
 				break;
 			case "adv":
 				daikinStatus.setSpecialMode(pair.length<2?SpecialMode.NONE:SpecialMode.getSpecialMode(pair[1]));
+				daikinStatus.setSpecialModeActive(pair.length<2?false:!SpecialMode.getSpecialMode(pair[1]).equals(SpecialMode.NONE));
 				break;
 			}
 		}

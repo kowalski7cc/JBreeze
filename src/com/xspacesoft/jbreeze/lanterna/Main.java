@@ -14,30 +14,17 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.googlecode.lanterna.TextColor;
-import com.googlecode.lanterna.gui2.BasicWindow;
-import com.googlecode.lanterna.gui2.Borders;
-import com.googlecode.lanterna.gui2.Button;
-import com.googlecode.lanterna.gui2.DefaultWindowManager;
-import com.googlecode.lanterna.gui2.Direction;
-import com.googlecode.lanterna.gui2.EmptySpace;
-import com.googlecode.lanterna.gui2.Label;
-import com.googlecode.lanterna.gui2.LinearLayout;
-import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
-import com.googlecode.lanterna.gui2.Panel;
-import com.googlecode.lanterna.gui2.TextBox;
-import com.googlecode.lanterna.gui2.Window;
-import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
+import com.googlecode.lanterna.gui2.*;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogBuilder;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
+import com.googlecode.lanterna.terminal.ansi.UnixTerminal;
+import com.googlecode.lanterna.terminal.virtual.DefaultVirtualTerminal;
 import com.xspacesoft.jbreeze.api.Daikin;
 import com.xspacesoft.jbreeze.api.DaikinStatus;
-import com.xspacesoft.jbreeze.api.options.FanDirection;
-import com.xspacesoft.jbreeze.api.options.FanSpeed;
-import com.xspacesoft.jbreeze.api.options.Mode;
-import com.xspacesoft.jbreeze.api.options.Power;
+import com.xspacesoft.jbreeze.api.options.*;
 
 public class Main {
 
@@ -48,17 +35,42 @@ public class Main {
 	private File dataFile;
 	private final int CONNECTION_TIMEOUT = 100;
 
+	private final static String OS = System.getProperty("os.name");
+
 	public Main() throws IOException {
+		System.out.println("Starting JBreeze");
+		System.out.println("Getting OS data");
+		System.out.println("OS: " + OS);
+		File home = getHomeDirectory();
+		System.out.println("Home direcotry: " + home);
 		System.out.println("Drawing main window");
-		Terminal terminal = new DefaultTerminalFactory().createTerminalEmulator();
+
+		Terminal terminal = null;
+		DefaultTerminalFactory dtf = new DefaultTerminalFactory();
+		dtf.setTerminalEmulatorTitle("Jbreeze");
+		try {
+			terminal = dtf.createTerminal();
+		} catch (IOException e) {
+			if (OS.toLowerCase().contains("windows")) {
+				try {
+					terminal = dtf.createTerminalEmulator();
+				} catch (Exception e1) {
+					System.out.println(e1);
+					System.exit(1);
+				}
+			} else {
+				System.exit(1);
+			}
+		}
+
 		screen = new TerminalScreen(terminal);
 		screen.startScreen();
 		units = new LinkedList<Daikin>();
 		textGUI = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.CYAN));
-		File folder = new File(new File(System.getProperty("user.home")), "JBreeze");
-		if(!folder.exists())
-			folder.mkdirs();
-		dataFile = new File(folder, "config.txt");
+
+		if(!home.exists())
+			home.mkdirs();
+		dataFile = new File(home, "config.txt");
 		statusMap = new HashMap<Daikin, DaikinStatus>();
 	}
 
@@ -127,7 +139,7 @@ public class Main {
 			} catch (IOException e) { }
 			statusMap.put(unit, daikinStatus);
 		}
-
+		textGUI.moveToTop(window);
 		window.close();
 		showUnitList();
 	}
@@ -313,6 +325,7 @@ public class Main {
 			modePanel.addComponent(coolModeButton);
 			modePanel.addComponent(fanModeButton);
 			modePanel.addComponent(dryModeButton);
+
 			Panel temperaturePanel = new Panel();
 			temperaturePanel.setLayoutManager(new LinearLayout(Direction.VERTICAL));
 			StringBuilder currentTemperatureString = new StringBuilder();
@@ -402,6 +415,33 @@ public class Main {
 			fanSpeedPanel.addComponent(speed3);
 			fanSpeedPanel.addComponent(speed4);
 			fanSpeedPanel.addComponent(speed5);
+
+			Panel specialModePanel = new Panel();
+			specialModePanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+			Button noneSpecialButton = new Button("None", () -> {
+				daikinStatus.setSpecialModeActive(false);
+				daikin.setStatus(daikinStatus);
+				window.close();
+				unitDetail(daikin);
+			});
+			Button powerfulButton = new Button("Powerful", () -> {
+				daikinStatus.setSpecialMode(SpecialMode.POWERFUL);
+				daikinStatus.setSpecialModeActive(true);
+				daikin.setStatus(daikinStatus);
+				window.close();
+				unitDetail(daikin);
+			});
+			Button economyButton = new Button("Economy", () -> {
+				daikinStatus.setSpecialMode(SpecialMode.ECONOMY);
+				daikinStatus.setSpecialModeActive(true);
+				daikin.setStatus(daikinStatus);
+				window.close();
+				unitDetail(daikin);
+			});
+			specialModePanel.addComponent(noneSpecialButton);
+			specialModePanel.addComponent(powerfulButton);
+			specialModePanel.addComponent(economyButton);
+
 			Panel windowControlPanel = new Panel();
 			windowControlPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
 			Button closeButton = new Button("Close", () -> {
@@ -425,6 +465,7 @@ public class Main {
 					window.close();
 				}
 			});
+
 			windowControlPanel.addComponent(closeButton);
 			windowControlPanel.addComponent(refreshButton);
 			windowControlPanel.addComponent(deleteUnitButton);
@@ -471,6 +512,7 @@ public class Main {
 			mainPanel.addComponent(temperaturePanel.withBorder(Borders.singleLine("Temperature control")));
 			mainPanel.addComponent(fanSpeedPanel.withBorder(Borders.singleLine("Fan speed control | Acutal speed: " + daikinStatus.getFanSpeed())));
 			mainPanel.addComponent(fanDirectionPanel.withBorder(Borders.singleLine("Fan direction control | Actual direction: " + daikinStatus.getFanDirection())));
+			mainPanel.addComponent(specialModePanel.withBorder(Borders.singleLine("Special mode control | Actual: " + daikinStatus.getSpecialMode())));
 			mainPanel.addComponent(windowControlPanel);
 			window.setComponent(mainPanel);
 			textGUI.addWindow(window);
@@ -492,4 +534,13 @@ public class Main {
 			return target.toString();
 		}
 	}
+
+	private File getHomeDirectory() {
+		if(OS.toLowerCase().contains("windows")) {
+			return new File(new File(System.getenv("APPDATA")), "JBreeze");
+		} else {
+			return new File(new File(System.getProperty("user.home")), ".jbreeze");
+		}
+	}
+
 }
