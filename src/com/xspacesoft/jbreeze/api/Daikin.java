@@ -27,7 +27,7 @@ public class Daikin implements Serializable {
 
 	public DaikinStatus getStatus() {
 		StringBuilder stringBuilder = new StringBuilder();
-		System.out.println("-START GET DATA-----------------------");
+		//System.out.println("-START GET DATA-----------------------");
 		try {
 			for(String method : methods) {
 				String result = new Client("http://" + inetAddress.getHostAddress() + method).get();
@@ -35,13 +35,13 @@ public class Daikin implements Serializable {
 					result = new Client("http://" + inetAddress.getHostAddress() + method).get();
 				}
 				stringBuilder.append(result + ",");
-				System.out.println(result);
+				//System.out.println(result);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
-			System.out.println("-STOP GET DATA-----------------------");
+			//System.out.println("-STOP GET DATA-----------------------");
 		}
 		return Decoder.decode(stringBuilder.toString());
 	}
@@ -49,10 +49,10 @@ public class Daikin implements Serializable {
 	public boolean setStatus(DaikinStatus status) {
 		String statusString = Encoder.encode(status);
 		try {
-			System.out.println("-START POST DATA-----------------------");
-			System.out.println(statusString);
-			System.out.println("=RESPONSE" +
-					" DATA=======================");
+			//System.out.println("-START POST DATA-----------------------");
+			//System.out.println(statusString);
+			//System.out.println("=RESPONSE" +
+			//		" DATA=======================");
 			String result = new Client("http://" + inetAddress.getHostAddress() + "/aircon/set_control_info")
 					.post(statusString);
 			System.out.println(result);
@@ -63,7 +63,7 @@ public class Daikin implements Serializable {
 		} catch (IOException e) {
 			return false;
 		} finally {
-			System.out.println("-STOP POST DATA-----------------------");
+			//System.out.println("-STOP POST DATA-----------------------");
 		}
 
 	}

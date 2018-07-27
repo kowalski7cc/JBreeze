@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.xspacesoft.kowalski7cc</groupId>
 	<artifactId>JBreeze</artifactId>
-	<version>1.1</version>
+	<version>1.1-multithread</version>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<plugins>
