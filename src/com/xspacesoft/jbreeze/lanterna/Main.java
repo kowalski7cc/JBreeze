@@ -64,6 +64,8 @@ public class Main {
         } catch (ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -119,26 +121,9 @@ public class Main {
     }
 
     private void pollUnits() {
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-        statusMap = units.stream()
-                .collect(Collectors.toMap(u -> u, u -> {
-                    Callable<DaikinStatus> callable = () -> {
-                        return u.getStatus();
-                    };
-                    return executorService.submit(callable);
-                }))
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(k -> k.getKey(), j -> {
-                    try {
-                        return j.getValue().get();
-                    } catch (InterruptedException e) {
-                        return null;
-                    } catch (ExecutionException e) {
-                        return null;
-                    }
-                }));
+        BatchControl batchControl = new BatchControl(units);
+        statusMap = batchControl.getAllStatus();
+        batchControl.close();
     }
 
 
