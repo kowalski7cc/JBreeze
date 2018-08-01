@@ -117,7 +117,9 @@ public class Main {
         if (units.size() == 0) {
             unitsPanel.addComponent(new Label("No units available"));
         } else {
-            statusMap.forEach((unit, status) -> unitsPanel.addComponent(newButtonFromStatus(unit, status)));
+            statusMap.forEach((unit, status) ->
+                    unitsPanel.addComponent(newButtonFromStatus(unit, status, () ->
+                            unitDetail(unit))));
         }
 
         mainPanel.addComponent(unitsPanel.withBorder(Borders.singleLine("Units")));
@@ -127,9 +129,16 @@ public class Main {
         controls.addComponent(new Button("Add unit", () -> {
             addUnit();
             window.close();
+            pollUnits();
+            showUnitList();
         }));
 
-        controls.addComponent(new Button("Remove unit"));
+        controls.addComponent(new Button("Remove unit", () -> {
+            removeUnit();
+            window.close();
+            pollUnits();
+            showUnitList();
+        }));
 
         controls.addComponent(new Button("Refresh", () -> {
             window.close();
@@ -144,20 +153,49 @@ public class Main {
         textGUI.addWindowAndWait(window);
     }
 
-    private Button newButtonFromStatus(Daikin unit, DaikinStatus status) {
+    private Button newButtonFromStatus(Daikin unit, DaikinStatus status, Runnable action) {
         Objects.requireNonNull(unit);
         if (status == null)
             return new Button("Unreachable"
                     + " ("
                     + unit.getInetAddress().getHostAddress()
-                    + ")", () -> unitDetail(unit));
+                    + ")", action);
         return new Button(status.getName()
                 + " | "
                 + status.getPower()
                 + " | "
                 + status.getMode()
                 + " | "
-                + status.getTemperature().getActual().toString(), () -> unitDetail(unit));
+                + status.getTemperature().getActual().toString(), action);
+    }
+
+    private void removeUnit() {
+        Window window = new BasicWindow("Remove unit");
+        Panel panel = new Panel();
+        panel.addComponent(new Label("Select unit to discard"));
+        Panel unitsPanel = new Panel();
+
+        statusMap.forEach((unit, status) ->
+                unitsPanel.addComponent(newButtonFromStatus(unit, status, () ->
+                {
+                    units.remove(unit);
+                    statusMap.remove(unit);
+                    try {
+                        saveData();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    window.close();
+                    removeUnit();
+                })));
+        panel.addComponent(unitsPanel.withBorder(Borders.singleLine("Units")));
+
+        Panel controls = new Panel();
+        controls.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+        controls.addComponent(new Button("Back", window::close));
+        panel.addComponent(controls);
+        window.setComponent(panel);
+        textGUI.addWindowAndWait(window);
     }
 
     private void addUnit() {
@@ -166,12 +204,16 @@ public class Main {
         Label hint = new Label("Enter unit's IP Address in the box:");
         panel.addComponent(hint);
         TextBox ip = new TextBox();
-        Button confirm = new Button("Confirm", () -> {
+        panel.addComponent(ip.withBorder(Borders.singleLine("Address")));
+        Panel controls = new Panel();
+        controls.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+        controls.addComponent(new Button("Confirm", () -> {
             try {
                 Daikin daikin = new Daikin(InetAddress.getByName(ip.getText()));
                 units.add(daikin);
                 statusMap.put(daikin, daikin.getStatus());
                 saveData();
+                window.close();
             } catch (UnknownHostException e) {
                 new MessageDialogBuilder()
                         .setTitle("Error adding unit")
@@ -185,12 +227,7 @@ public class Main {
                         .build()
                         .showDialog(textGUI);
             }
-            window.close();
-        });
-        panel.addComponent(ip.withBorder(Borders.singleLine("Address")));
-        Panel controls = new Panel();
-        controls.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
-        controls.addComponent(confirm);
+        }));
         controls.addComponent(new Button("Cancel", window::close));
         panel.addComponent(controls);
         window.setComponent(panel);
