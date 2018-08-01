@@ -7,7 +7,6 @@ import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,31 +26,21 @@ public class BatchControl implements AutoCloseable, Closeable {
 
     public Map<Daikin, DaikinStatus> getAllStatus() {
         return daikinUnits.stream()
-                .collect(Collectors.toMap(u -> u, u -> {
-                    Callable<DaikinStatus> callable = () -> {
-                        return u.getStatus();
-                    };
-                    return executorService.submit(callable);
-                }))
+                .collect(Collectors.toMap(u -> u, u -> executorService.submit(() -> u.getStatus())))
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(k -> k.getKey(), j -> {
                     try {
                         return j.getValue().get();
-                    } catch (InterruptedException e) {
-                        return null;
-                    } catch (ExecutionException e) {
+                    } catch (Exception e) {
                         return null;
                     }
                 }));
-
     }
 
     public void updateAllStatus(DaikinStatus status) {
         daikinUnits.stream()
-                .map(k -> executorService.submit(() -> {
-                    k.setStatus(status);
-                }))
+                .map(k -> executorService.submit(() -> k.setStatus(status)))
                 .map(k-> {
                     try {
                         return k.get();
